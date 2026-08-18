@@ -1,0 +1,5 @@
+.DS_Store
+node_modules/
+runtime/node-windows/
+data/avatar-cache/
+GMS-PROGRESS-TRACKER.zip

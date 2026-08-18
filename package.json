@@ -1,0 +1,13 @@
+{
+  "name": "gms-progress-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "lan": "node server.mjs --lan"
+  },
+  "dependencies": {
+    "playwright": "^1.62.1"
+  }
+}

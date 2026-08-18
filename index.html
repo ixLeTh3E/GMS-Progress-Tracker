@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="GMS 监控站：Global MapleStory 多角色装备、六转、副专业、任务与经验进度监控"
+    />
+    <title>GMS监控站</title>
+    <link rel="icon" href="./assets/ui/favicon.png?v=20260817brand" type="image/png" />
+    <link rel="stylesheet" href="./styles.css?v=20260817layout" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+          <img class="brand-mark" src="./assets/ui/favicon.png?v=20260817brand" alt="GMS监控站" />
+          <div>
+            <strong data-i18n="brand.title">GMS监控站</strong>
+            <span>Global MapleStory</span>
+          </div>
+        </div>
+
+        <nav class="side-nav" aria-label="主导航">
+          <button class="nav-item is-active" data-view="overview">
+            <span class="nav-icon" data-icon="layout"></span>
+            <span data-i18n="nav.overview">总览</span>
+          </button>
+          <button class="nav-item" data-view="characters">
+            <span class="nav-icon" data-icon="users"></span>
+            <span data-i18n="nav.characters">角色进度</span>
+          </button>
+          <button class="nav-item" data-view="tasks" data-task-group="daily">
+            <span class="nav-icon" data-icon="checklist"></span>
+            <span data-i18n="nav.dailyTasks">日常任务</span>
+          </button>
+          <button class="nav-item" data-view="tasks" data-task-group="weekly">
+            <span class="nav-icon" data-icon="clock"></span>
+            <span data-i18n="nav.weeklyTasks">周常任务</span>
+          </button>
+          <button class="nav-item" data-view="mules">
+            <span class="nav-icon" data-icon="egg"></span>
+            <span data-i18n="nav.mules">搬蛋结算</span>
+          </button>
+          <button class="nav-item" data-view="data">
+            <span class="nav-icon" data-icon="database"></span>
+            <span data-i18n="nav.data">数据管理</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <button class="icon-button" id="resetWeekButton" data-tooltip-i18n="tooltip.resetWeek">
+            <span class="nav-icon" data-icon="refresh"></span>
+          </button>
+          <button class="icon-button" id="exportButton" data-tooltip-i18n="tooltip.exportCsv">
+            <span class="nav-icon" data-icon="download"></span>
+          </button>
+          <span class="save-state" id="saveState">已保存</span>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <button class="mobile-menu" id="mobileMenuButton" aria-label="打开菜单">
+            <span data-icon="menu"></span>
+          </button>
+          <div class="topbar-title">
+            <span class="eyebrow" data-i18n="topbar.eyebrow">GMS 监控站</span>
+            <h1 id="pageTitle">总览</h1>
+          </div>
+          <div class="language-switch" role="group" aria-label="Language">
+            <button type="button" data-language="zh" class="is-active">中</button>
+            <button type="button" data-language="en">EN</button>
+          </div>
+          <div class="topbar-actions">
+            <button
+              class="button button-primary topbar-add-character"
+              type="button"
+              data-new-character
+            >
+              <span data-icon="plus"></span>
+              <span data-i18n="characters.add">Add Characters</span>
+            </button>
+            <button
+              class="button button-ghost topbar-batch-delete"
+              id="batchDeleteOpenButton"
+              type="button"
+              data-batch-delete-open
+            >
+              <span data-icon="trash"></span>
+              <span data-i18n="characters.batchDelete">Delete Characters</span>
+            </button>
+          </div>
+          <div class="reset-strip" id="resetStrip"></div>
+        </header>
+
+        <section class="content" id="content" aria-live="polite"></section>
+      </main>
+    </div>
+
+    <div class="backdrop" id="backdrop"></div>
+
+    <dialog class="modal" id="confirmModal">
+      <form method="dialog">
+        <div class="modal-icon" data-icon="alert"></div>
+        <h2 id="modalTitle">确认操作</h2>
+        <p id="modalMessage"></p>
+        <div class="modal-actions">
+          <button class="button button-ghost" value="cancel" data-i18n="confirm.cancel">取消</button>
+          <button class="button button-danger" id="modalConfirm" value="confirm" data-i18n="confirm.confirm">确认</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal character-modal" id="characterModal">
+      <form method="dialog" id="characterForm"></form>
+    </dialog>
+
+    <dialog class="modal task-modal" id="taskModal">
+      <form method="dialog" id="taskForm"></form>
+    </dialog>
+
+    <dialog class="modal batch-delete-modal" id="batchDeleteModal">
+      <form method="dialog" class="batch-delete-form">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow">BATCH DELETE</span>
+            <h2 data-i18n="batchDelete.title">批量删除角色</h2>
+          </div>
+          <button class="modal-close" value="cancel" aria-label="Close">&times;</button>
+        </div>
+        <p data-i18n="batchDelete.description">
+          选择要删除的角色，关联任务与 BOSS 勾选会一并移除。
+        </p>
+        <div class="batch-delete-toolbar">
+          <label class="batch-delete-select-all">
+            <input id="batchDeleteSelectAll" type="checkbox" />
+            <span data-i18n="batchDelete.selectAll">全选</span>
+          </label>
+          <span class="batch-delete-count" id="batchDeleteCount"></span>
+        </div>
+        <div class="batch-delete-list" id="batchDeleteList"></div>
+        <div class="modal-actions">
+          <button class="button button-ghost" value="cancel" data-i18n="confirm.cancel">取消</button>
+          <button
+            class="button button-danger"
+            id="batchDeleteConfirmButton"
+            type="button"
+            data-i18n="batchDelete.confirm"
+            disabled
+          >
+            删除所选
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal batch-daily-delete-modal" id="batchDailyDeleteModal">
+      <form method="dialog" class="batch-daily-delete-form">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow">CUSTOM DAILY TASKS</span>
+            <h2 data-i18n="daily.batchDeleteTitle">批量删除日常任务</h2>
+          </div>
+          <button class="modal-close" value="cancel" aria-label="Close">&times;</button>
+        </div>
+        <p data-i18n="daily.batchDeleteDescription">
+          仅从当前角色移除所选的自定义日常任务。
+        </p>
+        <div class="batch-delete-toolbar">
+          <label class="batch-delete-select-all">
+            <input id="batchDailyDeleteSelectAll" type="checkbox" />
+            <span data-i18n="batchDelete.selectAll">全选</span>
+          </label>
+          <span class="batch-delete-count" id="batchDailyDeleteCount"></span>
+        </div>
+        <div class="batch-delete-list" id="batchDailyDeleteList"></div>
+        <div class="modal-actions">
+          <button class="button button-ghost" value="cancel" data-i18n="confirm.cancel">取消</button>
+          <button
+            class="button button-danger"
+            id="batchDailyDeleteConfirmButton"
+            type="button"
+            data-i18n="batchDelete.confirm"
+            disabled
+          >
+            删除所选
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal daily-add-modal" id="dailyAddModal">
+      <form method="dialog" class="daily-add-form">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow">DAILY CATALOG</span>
+            <h2 data-i18n="daily.addTitle">添加日常任务</h2>
+          </div>
+          <button class="modal-close" value="cancel" aria-label="Close">&times;</button>
+        </div>
+        <p data-i18n="daily.addDescription">
+          选择要添加到当前角色的日常任务。
+        </p>
+        <div class="daily-add-grid" id="dailyAddGrid"></div>
+        <div class="daily-add-actions">
+          <button class="button button-ghost" value="cancel" data-i18n="confirm.cancel">取消</button>
+          <button class="button button-primary" id="dailyAddConfirmButton" type="button" data-daily-add-confirm disabled>
+            添加所选
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal daily-add-modal weekly-add-modal" id="weeklyAddModal">
+      <form method="dialog" class="daily-add-form">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow">WEEKLY CATALOG</span>
+            <h2 data-i18n="weekly.addTitle">添加周常任务</h2>
+          </div>
+          <button class="modal-close" value="cancel" aria-label="Close">&times;</button>
+        </div>
+        <p data-i18n="weekly.addDescription">
+          选择要添加到当前角色的周常任务。
+        </p>
+        <div class="daily-add-grid" id="weeklyAddGrid"></div>
+        <div class="daily-add-actions">
+          <button class="button button-ghost" value="cancel" data-i18n="confirm.cancel">取消</button>
+          <button class="button button-primary" id="weeklyAddConfirmButton" type="button" data-weekly-add-confirm disabled>
+            添加所选
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal daily-add-modal mule-add-modal" id="muleAddModal">
+      <form method="dialog" class="daily-add-form">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow">BOSS CATALOG</span>
+            <h2 data-i18n="mule.addTitle">添加 Boss</h2>
+          </div>
+          <button class="modal-close" value="cancel" aria-label="Close">&times;</button>
+        </div>
+        <p data-i18n="mule.addDescription">
+          选择 Boss、难度和参与人数。
+        </p>
+        <div class="daily-add-grid mule-add-grid" id="muleAddGrid"></div>
+      </form>
+    </dialog>
+
+    <dialog class="modal batch-weekly-delete-modal" id="batchWeeklyDeleteModal">
+      <form method="dialog" class="batch-daily-delete-form">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow">CUSTOM WEEKLY TASKS</span>
+            <h2 data-i18n="weekly.batchDeleteTitle">删除周常任务</h2>
+          </div>
+          <button class="modal-close" value="cancel" aria-label="Close">&times;</button>
+        </div>
+        <p data-i18n="weekly.batchDeleteDescription">
+          仅从当前角色移除所选周常任务。
+        </p>
+        <div class="batch-delete-toolbar">
+          <label class="batch-delete-select-all">
+            <input id="batchWeeklyDeleteSelectAll" type="checkbox" />
+            <span data-i18n="batchDelete.selectAll">全选</span>
+          </label>
+          <span class="batch-delete-count" id="batchWeeklyDeleteCount"></span>
+        </div>
+        <div class="batch-delete-list" id="batchWeeklyDeleteList"></div>
+        <div class="modal-actions">
+          <button class="button button-ghost" value="cancel" data-i18n="confirm.cancel">取消</button>
+          <button
+            class="button button-danger"
+            id="batchWeeklyDeleteConfirmButton"
+            type="button"
+            data-i18n="batchDelete.confirm"
+            disabled
+          >
+            删除所选
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal equipment-catalog-modal" id="equipmentCatalogModal">
+      <form method="dialog" class="equipment-catalog-form">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow" id="equipmentCatalogSlot">Equipment</span>
+            <h2 id="equipmentCatalogTitle">本地装备图鉴</h2>
+          </div>
+          <button class="modal-close" value="cancel" aria-label="Close">&times;</button>
+        </div>
+        <div class="equipment-catalog-grid" id="equipmentCatalogGrid"></div>
+      </form>
+    </dialog>
+
+    <dialog class="modal set-effect-modal" id="setEffectModal">
+      <form method="dialog">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow">SET EFFECT</span>
+            <h2 id="setEffectTitle">套装详情</h2>
+          </div>
+          <button class="modal-close" value="cancel" aria-label="Close">&times;</button>
+        </div>
+        <div class="set-effect-body" id="setEffectBody"></div>
+      </form>
+    </dialog>
+
+    <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+
+    <script src="./data.js?v=20260817layout"></script>
+    <script src="./sample-data.js?v=20260817sample"></script>
+    <script src="./i18n.js?v=20260817layout"></script>
+    <script src="./class-thumbnails.js?v=20260817layout"></script>
+    <script src="./potential-catalog.js?v=20260816dd"></script>
+    <script src="./lucky-equipment.js?v=20260816dd"></script>
+    <script src="./set-effects.js?v=20260816dd"></script>
+    <script src="./hexa-skills.js?v=20260816dd"></script>
+    <script src="./boss-mule-data.js?v=20260817"></script>
+    <script src="./equipment-catalog.js?v=20260816dd"></script>
+    <script src="./equipment-type-icons.js?v=20260816dd"></script>
+    <script src="./class-weapons.js?v=20260817layout"></script>
+    <script src="./app.js?v=20260817layout"></script>
+  </body>
+</html>

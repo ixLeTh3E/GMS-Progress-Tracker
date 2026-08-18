@@ -16,6 +16,25 @@
 git clone git@github.com:ixLeTh3E/GMS-Progress-Tracker.git
 ```
 
+## 在哪里输入命令
+
+以下代码需要粘贴到命令行终端中执行，而不是在浏览器地址栏输入：
+
+- macOS：打开“启动台 → 终端（Terminal）”，默认使用 `bash` 或 `zsh`。
+- Linux：打开系统自带的终端。
+- Windows：
+  - 推荐使用 Git Bash。
+  - 也可以使用 PowerShell 或 CMD。
+  - 如果只是双击 `点我启动GMS_MONITOR.cmd`，则不需要手动输入命令。
+
+进入终端后，先切换到项目所在目录，例如：
+
+```bash
+cd /path/to/GMS-Progress-Tracker
+```
+
+然后再执行 `git clone`、`npm install`、`npm start` 或 `node server.mjs --lan` 等命令。
+
 ## Windows 运行
 
 ### 完整模式
@@ -139,6 +158,25 @@ Global MapleStory multi-character progress tracker for equipment, HEXA, professi
 ```bash
 git clone git@github.com:ixLeTh3E/GMS-Progress-Tracker.git
 ```
+
+## Where to Enter Commands
+
+Paste the commands into a command-line terminal, not into the browser address bar:
+
+- macOS: open **Launchpad → Terminal**. The default shell is `bash` or `zsh`.
+- Linux: open the system terminal.
+- Windows:
+  - Git Bash is recommended.
+  - PowerShell or CMD can also be used.
+  - If you double-click `点我启动GMS_MONITOR.cmd`, you do not need to enter commands manually.
+
+After opening the terminal, change to the project directory first:
+
+```bash
+cd /path/to/GMS-Progress-Tracker
+```
+
+Then run commands such as `git clone`, `npm install`, `npm start`, or `node server.mjs --lan`.
 
 ## Run on Windows
 
